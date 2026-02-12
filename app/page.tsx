@@ -3,84 +3,54 @@ import { revalidatePath } from 'next/cache';
 export default function Home() {
   async function createTask(formData: FormData) {
     'use server';
-    
-    // 1. Extraer el texto del formulario
     const taskTitle = formData.get('task')?.toString();
     if (!taskTitle) return;
 
+    // EL TOKEN QUE ME PASASTE (Solo para esta prueba, luego lo movemos a .env)
+    const tempToken = "EwB4BMl6BAAUu4TQbLz/EdYigQnDPtIo76ZZUKsAAQyUnt3bPJwYbmOX+g5rrduViUzcM2k2vOwUUkhbw/fSezuh/pC8yy/9kSBjwJAvzKp1z4/cwQcHLMDWApg0CTX9bykzXqDfz2bo86OxvH7otaIgvilfTAj2gTrvzrELH0Y5Je2DC1QapHTx7I+zsCjHvo5hQvxnMWmKN/eWuePe4vl1WfVc3GaNQmYwQsGljbY2N+Y1HU5J6o+Ewm22ksYeXhL4jFEhHPalaIuA/Vqqzcqwr71fa/Vys9iRqyG1hp3am6J23lUZ8yvigXFgEx1XlPA1kUpiM1woUAlu49mKUP7306NjhfXmfHvvkp8epiMdRzv7JTofQzYeVvSenV0QZgAAEJml5ZZnqELU9CRV/rElH99AA++jQUSOyaY9MTkp9R68RlpB0hTek2xRuHixS0RH/+dqIDOnvf9VXej3CareE+mb9HkNs8PenmNqZR3dHEmcAQP7fOClCuskSEVKfO0vFExsfFMgqIVlurri+dKmidoJVp1oUlbT3nRuUQpS+Q4cHaN2mrhT0Ey33YpPqNdef1C2Z3MQ8wbssbR537q2eS5aF50u1rJER6MddfAOvkXJc6uOakqWhaNPl7n5hgGBwYoPgaBSKnRDD8hqZI2SDA3HaO7VZDExjIqp94dq6UmnvOlmZuJcIj3pN7sgEguk6eYytt3bp0gHfoGPe5R3JSxougyjiR077FnptpF3g65iF/dfiGkvi+kQqyMduyJdYRF/puI5MRpO3NwloDpATWhKUvuJfGZ74NRS+E5z4MUUL9JCCdrypAJ9Go5CqTgpsKK8TysYKdV/J7xrx2tUI0wGZkFUQCKv6MvOt+fcS1JRDO/seEGSInv14WKXBqA7dv9kYA97xt1Sj72e4FF4jsndaiarpYa7SXyrDO+FMuRir9v9gqs4uUYX1p6w61EWhwQbHxhDJfBWUwkR5zZY+fAID8tR8T4dblAisklBS5KVL81HHV7bLhda7yhKHuz9xMULAoXrmEqn37N88R0vvEz2xN3Nejb293f77bF5Zzsa8wxYeYA173RnI20cOGuYxMhllPHLkzMCd/mkFC5lUtuaUJjFqkx4KqToUm+H+nDQjrlPjltmvKrIgGA22Uu04oy1/FVNEL42eN10dn59+GcxodjVorF8e/CMNuNuwdl98wcaxrX1sYqnZiX+vLuHapvc4ZyuKMFRboII1obE261/RrlOUF9xAypetkOWG4G8thdxg0TIZk4B4YfpqWxSy1mNNd6PZGU7Yibi5wCwZb2v7OBreevs1DaL3du9ywfgJPTWKkPs+ay6xfak+lPO88K1e+AaW46v4Q9t9rtePfurF9iFGCmHzEP3ztFyaHJnf8GHHkQZrZRHMoytXFH866cUfqwvIaNrbopP/gB02yTLJ2KlLzKXJcozcU9t8Wzu3oysyVziN4glukvS5ZVC+hOPV12SvZDS/WLOHUr66sscYtmYbE1hH8SYBTMlrBa8c857Aw==";
+
     try {
-      // 2. Autenticación con Microsoft (Obtener Token)
-      const tokenUrl = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;
-      const tokenRes = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: process.env.CLIENT_ID!,
-          scope: 'https://graph.microsoft.com/.default',
-          client_secret: process.env.CLIENT_SECRET!,
-          grant_type: 'client_credentials',
-        }),
-      });
-
-      const tokenData = await tokenRes.json();
-      const access_token = tokenData.access_token;
-
-      // 3. Enviar la tarea a tu lista de "Universidad Pendientes"
-      await fetch(`https://graph.microsoft.com/v1.0/users/${process.env.CLIENT_ID}/todo/lists/${process.env.LIST_ID}/tasks`, {
+      const response = await fetch(`https://graph.microsoft.com/v1.0/users/${process.env.USER_ID}/todo/lists/${process.env.LIST_ID}/tasks`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `Bearer ${tempToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ title: taskTitle }),
       });
 
-      // 4. Limpiar el formulario (Recargar)
-      revalidatePath('/');
-      console.log("Tarea enviada con éxito");
-      
+      if (response.ok) {
+        console.log("¡Tarea creada!");
+        revalidatePath('/');
+      }
     } catch (error) {
-      console.error('Error enviando la tarea:', error);
+      console.error('Error:', error);
     }
   }
 
   return (
     <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
-        <div className="flex items-center gap-3 mb-6">
-          {/* Un puntito azul animado para que se vea 'tech' */}
-          <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
-          <h1 className="text-xl font-bold text-slate-800">UCR Pendientes</h1>
+      <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Pendientes</h1>
+          <p className="text-slate-400 text-sm mt-2">Enviá tareas a Mango</p>
         </div>
-        
-        <p className="text-slate-500 mb-8 text-sm">
-          Escribí aquí lo que ocupo hacer y me llegará directo a Microsoft To Do.
-        </p>
 
         <form action={createTask} className="space-y-4">
-          <div>
-            <input
-              name="task"
-              type="text"
-              placeholder="Ej: Comprar repuestos..."
-              required
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-slate-800"
-            />
-          </div>
-          
+          <input
+            name="task"
+            type="text"
+            placeholder="¿Qué ocupo hacer?"
+            required
+            className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800"
+          />
           <button
             type="submit"
-            className="w-full bg-slate-900 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
           >
-            Enviar Tarea 🚀
+            Enviar tareilla
           </button>
         </form>
-
-        <footer className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-xs text-slate-400">
-            Sistema Personal de Angel Barboza
-          </p>
-        </footer>
       </div>
     </main>
   );
